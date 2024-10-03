@@ -195,7 +195,7 @@ class BaseDataset(torch.utils.data.Dataset):
         self.args = args
         self.path = path
         self.config = config
-        self.device = "cuda:0"
+        self.device = "cpu" #"cuda:0"
         self.dtype = torch.float32
         self.num_imgs = 999999
 
@@ -539,11 +539,11 @@ class CustomParser:
     def __init__(self, dataset_path):
         self.dataset_path = dataset_path
         self.load_data()
-        self.n_img = len(self.image_paths)
+        self.n_img = len(self.color_paths)
 
     def load_data(self):
         # Paths to the images and poses
-        images_dir = os.path.join(self.dataset_path, "images")
+        images_dir = os.path.join(self.dataset_path, "rgb_circle")
         poses_file = os.path.join(self.dataset_path, "poses.txt")
 
         # Load image filenames and sort them
@@ -553,13 +553,13 @@ class CustomParser:
         ])
 
         # Full paths to images
-        self.image_paths = [os.path.join(images_dir, f) for f in image_files]
+        self.color_paths = [os.path.join(images_dir, f) for f in image_files]
 
         # Load poses
         self.poses = self.load_poses(poses_file)
 
         # Check that the number of images and poses match
-        if len(self.image_paths) != len(self.poses):
+        if len(self.color_paths) != len(self.poses):
             raise ValueError("Number of images and poses do not match.")
 
     def load_poses(self, poses_file):
@@ -583,6 +583,6 @@ class CustomDataset(MonocularDataset):
         # Parse the dataset
         parser = CustomParser(self.dataset_path)
         self.num_imgs = parser.n_img
-        self.color_paths = parser.image_paths
+        self.color_paths = parser.color_paths
         self.poses = parser.poses
         self.depth_paths = [None] * self.num_imgs  # No depth maps
