@@ -14,3 +14,7 @@ datasets
 wandb
 
 result*
+
+.DS_Store
+toy_data
+__pycache__
