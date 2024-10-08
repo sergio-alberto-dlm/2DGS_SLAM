@@ -51,4 +51,16 @@ def generate_circular_trajectory(center, radius, num_steps, up=[0, 1, 0]):
         cameras.append(view_matrix)
     return cameras
 
-
+def generate_circular_trajectory_xy(center, radius, num_steps, up=[0, 0, 1]):
+    """
+    Generate camera poses along a circular trajectory around a center point.
+    """
+    cameras = []
+    for t in np.linspace(0, 2 * np.pi, num_steps, endpoint=False):
+        x = center[0] + radius * np.cos(t)
+        y = center[1] + radius * np.sin(t)
+        z = center[2] 
+        eye = [x, y, z]
+        view_matrix = look_at(eye, np.array([0, 0, 0]), up)
+        cameras.append(view_matrix)
+    return cameras

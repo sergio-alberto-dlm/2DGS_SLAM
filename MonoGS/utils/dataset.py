@@ -195,7 +195,7 @@ class BaseDataset(torch.utils.data.Dataset):
         self.args = args
         self.path = path
         self.config = config
-        self.device = "cpu" #"cuda:0"
+        self.device = "cuda:0"
         self.dtype = torch.float32
         self.num_imgs = 999999
 
@@ -543,8 +543,8 @@ class CustomParser:
 
     def load_data(self):
         # Paths to the images and poses
-        images_dir = os.path.join(self.dataset_path, "rgb_circle")
-        poses_file = os.path.join(self.dataset_path, "poses.txt")
+        images_dir = os.path.join(self.dataset_path, "tmp_image")
+        poses_file = os.path.join(self.dataset_path, "tmp_poses.txt")
 
         # Load image filenames and sort them
         image_files = sorted([

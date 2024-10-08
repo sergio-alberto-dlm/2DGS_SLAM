@@ -5,10 +5,10 @@ def image_gradient(image):
     # Compute image gradient using Scharr Filter
     c = image.shape[0]
     conv_y = torch.tensor(
-        [[3, 0, -3], [10, 0, -10], [3, 0, -3]], dtype=torch.float32, device="cpu"#"cuda" #<------------
+        [[3, 0, -3], [10, 0, -10], [3, 0, -3]], dtype=torch.float32, device="cuda" #<------------
     )
     conv_x = torch.tensor(
-        [[3, 10, 3], [0, 0, 0], [-3, -10, -3]], dtype=torch.float32, device="cpu"#"cuda"#<------------
+        [[3, 10, 3], [0, 0, 0], [-3, -10, -3]], dtype=torch.float32, device="cuda"#<------------
     )
     normalizer = 1.0 / torch.abs(conv_y).sum()
     p_img = torch.nn.functional.pad(image, (1, 1, 1, 1), mode="reflect")[None]
@@ -24,8 +24,8 @@ def image_gradient(image):
 def image_gradient_mask(image, eps=0.01):
     # Compute image gradient mask
     c = image.shape[0]
-    conv_y = torch.ones((1, 1, 3, 3), dtype=torch.float32, device="cpu") #"cuda")<------
-    conv_x = torch.ones((1, 1, 3, 3), dtype=torch.float32, device="cpu") #"cuda")<------ 
+    conv_y = torch.ones((1, 1, 3, 3), dtype=torch.float32, device="cuda")#<------
+    conv_x = torch.ones((1, 1, 3, 3), dtype=torch.float32, device="cuda")#<------ 
     p_img = torch.nn.functional.pad(image, (1, 1, 1, 1), mode="reflect")[None]
     p_img = torch.abs(p_img) > eps
     img_grad_v = torch.nn.functional.conv2d(
@@ -61,13 +61,13 @@ def get_loss_tracking(config, image, depth, opacity, viewpoint, initialization=F
 
 
 def get_loss_tracking_rgb(config, image, depth, opacity, viewpoint):
-    gt_image = viewpoint.original_image#.cuda()
+    gt_image = viewpoint.original_image.cuda()
     _, h, w = gt_image.shape
     mask_shape = (1, h, w)
     rgb_boundary_threshold = config["Training"]["rgb_boundary_threshold"]
     rgb_pixel_mask = (gt_image.sum(dim=0) > rgb_boundary_threshold).view(*mask_shape)
     rgb_pixel_mask = rgb_pixel_mask * viewpoint.grad_mask
-    l1 = opacity * torch.abs(image * rgb_pixel_mask - gt_image * rgb_pixel_mask)
+    l1 = torch.abs(image * rgb_pixel_mask - gt_image * rgb_pixel_mask) #*opacity<-----------------------
     return l1.mean()
 
 

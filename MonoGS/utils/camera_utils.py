@@ -21,7 +21,7 @@ class Camera(nn.Module):
         fovy,
         image_height,
         image_width,
-        device= "cpu" #"cuda:0",
+        device= "cuda:0",
     ):
         super(Camera, self).__init__()
         self.uid = uid

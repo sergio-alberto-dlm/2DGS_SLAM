@@ -63,8 +63,8 @@ Training:
   monocular: True 
 
   lr:
-    cam_rot_delta: 0.003
-    cam_trans_delta: 0.001
+    cam_rot_delta: 0.003 #0.003
+    cam_trans_delta: 0.01 #0.001
 
 opt_params:
   iterations: 30000
@@ -90,7 +90,7 @@ model_params:
   model_path: ""
   resolution: -1
   white_background: False
-  data_device: "cpu" #"cuda"
+  data_device: "cuda"
 
 pipeline_params:
   convert_SHs_python: False

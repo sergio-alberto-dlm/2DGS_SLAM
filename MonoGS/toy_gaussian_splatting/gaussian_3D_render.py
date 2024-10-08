@@ -2,6 +2,7 @@ import torch
 
 from toy_utils.utils import build_scaling_rotation, homogeneous, homogeneous_vec
 from toy_utils.utils_render import alpha_blending_with_gaussians
+from utils.pose_utils import SE3_exp
 
 # DEVICE = 'cpu'
 
@@ -50,18 +51,26 @@ def get_radius(cov2d):
     lambda2 = mid - torch.sqrt((mid**2-det).clip(min=0.1))
     return 3.0 * torch.sqrt(torch.max(lambda1, lambda2)).ceil()
 
-def volume_splatting(means3D, scales, quats, viewpoint, projmat, colors, opacities, intrins, DEVICE):
+def volume_splatting(means3D, scales, quats, viewpoint, projmat, colors, opacities, intrins, device):
     
-    viewmat = torch.eye(4)
-    viewmat[:3, :3] = viewpoint.R
-    viewmat[-1:,:3] = viewpoint.T
+    #viewmat = torch.eye(4)
+    #viewmat[:3, :3] = viewpoint.R
+    #viewmat[-1:,:3] = viewpoint.T
 
-    projmat = torch.zeros(4,4).to(DEVICE)
+    tau = torch.cat([viewpoint.cam_trans_delta, viewpoint.cam_rot_delta], axis=0)
+
+    viewmat = torch.eye(4, device=tau.device)
+    viewmat[0:3, 0:3] = viewpoint.R
+    viewmat[0:3, 3] = viewpoint.T
+
+    viewmat = SE3_exp(tau) @ viewmat
+
+    projmat = torch.zeros(4,4).to(device)
     projmat[:3,:3] = intrins
     projmat[-1,-2] = 1.0
     projmat = projmat.T
 
-    mean_ndc, mean_view, in_mask = projection_ndc(means3D, viewmatrix=viewmat, projmatrix=projmat)
+    mean_ndc, mean_view, in_mask = projection_ndc(means3D, viewmatrix=viewmat.T, projmatrix=projmat)
 
     depths = mean_view[:,2]
     mean_coord_x = mean_ndc[..., 0]
@@ -75,12 +84,12 @@ def volume_splatting(means3D, scales, quats, viewpoint, projmat, colors, opaciti
     fx, fy = intrins[0,0], intrins[1,1]
     tan_fovx = W / (2 * fx)
     tan_fovy = H / (2 * fy)
-    cov2d = build_covariance_2d(means3D, cov3d, viewmat, tan_fovx, tan_fovy, fx, fy)
+    cov2d = build_covariance_2d(means3D, cov3d, viewmat.T, tan_fovx, tan_fovy, fx, fy)
     radii = get_radius(cov2d)
 
     # Rasterization
     # generate pixels
-    pix = torch.stack(torch.meshgrid(torch.arange(H), torch.arange(W), indexing='xy'), dim=-1).to(DEVICE).flatten(0,-2)
+    pix = torch.stack(torch.meshgrid(torch.arange(H), torch.arange(W), indexing='xy'), dim=-1).to(device).flatten(0,-2)
     sorted_conic = cov2d.inverse() # inverse of variance
     dx = (pix[:,None,:] - means2D[None,:]) # B P 2
     dist2 = dx[:, :, 0]**2 * sorted_conic[:, 0, 0] + dx[:, :, 1]**2 * sorted_conic[:, 1, 1]+ dx[:,:,0]*dx[:,:,1] * sorted_conic[:, 0, 1]+ dx[:,:,0]*dx[:,:,1] * sorted_conic[:, 1, 0]

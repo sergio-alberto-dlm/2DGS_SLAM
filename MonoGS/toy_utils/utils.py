@@ -1,8 +1,11 @@
 import torch
 import numpy as np
 import matplotlib
+import wandb 
+import os
+import json
 
-DEVICE = "cpu"
+DEVICE = "cuda"
 
 def build_rotation(r):
     norm = torch.sqrt(r[:,0]*r[:,0] + r[:,1]*r[:,1] + r[:,2]*r[:,2] + r[:,3]*r[:,3])
@@ -113,4 +116,18 @@ def toy_gaussian_model(num_points):
             "colors"    : colors,
             "opacities" : opacity, 
             "intrins"   : intrins}
-            
+
+def log_image_table(renders : dict):
+    # Create a wandb Table 
+    table = wandb.Table(columns=["image", "ate"])
+    for img, ate in zip(renders["image"], renders["ate"]):
+        table.add_data(wandb.Image(img), ate)
+    wandb.log({"render_table":table}, commit=False)
+
+def load_gaussians(config, file_name_gaussians):
+    gaussians_path = os.path.join(config["Dataset"]["dataset_path"], file_name_gaussians)
+    with open(gaussians_path, "r", encoding="utf-8") as f:
+        gaussians_data = json.load(f)
+    for key in gaussians_data:
+        gaussians_data[key] = torch.tensor(gaussians_data[key]).to(DEVICE)
+    return gaussians_data
